@@ -14,6 +14,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <rg/Error.h>
+
+using namespace std;
+
+unsigned int TextureFromFile(const char* filename, std::string directory);
+
+
 class Model {
 public:
     std::vector<Mesh> meshes;
@@ -28,6 +34,12 @@ public:
     void Draw(Shader& shader) {
         for (Mesh& mesh : meshes) {
             mesh.Draw(shader);
+        }
+    }
+
+    void SetShaderTextureNamePrefix(std::string prefix) {
+        for (Mesh& mesh: meshes) {
+            mesh.glslIdentifierPrefix = prefix;
         }
     }
 
@@ -61,12 +73,21 @@ private:
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
 
+        cout << "provessicnh" << endl;
+
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+        aiColor3D diffuse(0.0f);
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse); //boja koju ce dobiti mesh
+
         for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
             Vertex vertex;
             vertex.Position.x = mesh->mVertices[i].x;
             vertex.Position.y = mesh->mVertices[i].y;
             vertex.Position.z = mesh->mVertices[i].z;
-            
+
+            vertex.Color = glm::vec4(diffuse.r, diffuse.g, diffuse.b, 1.0); //todo(CHECK)
+            cout << diffuse.r << diffuse.g << diffuse.b<<endl;
             if (mesh->HasNormals()) {
                 vertex.Normal.x = mesh->mNormals[i].x;
                 vertex.Normal.y = mesh->mNormals[i].y;
@@ -91,16 +112,13 @@ private:
             vertices.push_back(vertex);
         }
 
-        for (unsigned int i = 0; i < mesh->mFaces; ++i) {
+        for (unsigned int i = 0; reinterpret_cast<aiFace *>(i) < mesh->mFaces; ++i) {
             aiFace face = mesh->mFaces[i];
 
             for (unsigned int j = 0; j < face.mNumIndices; ++j) {
                 indices.push_back(face.mIndices[j]);
             }
         }
-
-
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
         loadTextureMaterial(material, aiTextureType_DIFFUSE, "texture_diffuse", textures);
 
@@ -170,7 +188,7 @@ unsigned int TextureFromFile(const char* filename, std::string directory) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     } else {
         ASSERT(false, "Failed to load texture image");

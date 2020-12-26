@@ -12,7 +12,7 @@
 #include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
-#include <learnopengl/model.h>
+#include <learnopengl//model.h>
 #include <rg/Error.h>
 #include <iostream>
 
@@ -26,7 +26,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -34,6 +34,10 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+//figure position
+glm::vec3 robot_position = glm::vec3(0.0f);
+float robot_speed = 2.0f;
 
 struct PointLight {
     glm::vec3 position;
@@ -112,12 +116,16 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader modelShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+//    Shader robotShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader robotShader("resources/shaders/robot_shader.vs", "resources/shaders/robot_shader.fs");
+
 
     // load models
     // -----------
-    Model ourModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
-    ourModel.SetShaderTextureNamePrefix("material.");
+//    Model robotModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
+    Model robotModel(FileSystem::getPath("resources/objects/robot_figure/flying-robot.obj"));
+
+    robotModel.SetShaderTextureNamePrefix("material.");
     PointLight pointLight;
     pointLight.ambient = glm::vec3(0.4, 0.4, 0.2);
     pointLight.diffuse = glm::vec3(0.6, 0.5, 0.6);
@@ -131,7 +139,7 @@ int main()
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 clearColor = glm::vec4(0.8f, 0.4f, 0.5f, 1.0f);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -153,32 +161,33 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
-        modelShader.use();
 
-        float time = glfwGetTime();
+        //Drawing figure
+        robotShader.use();
 
-        pointLight.position = glm::vec3(4.0f * cos(time), 4.0f, 4*sin(time));
-        modelShader.setVec3("pointLight.position", pointLight.position);
-        modelShader.setVec3("pointLight.ambient", pointLight.ambient);
-        modelShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        modelShader.setVec3("pointLight.specular", pointLight.specular);
-        modelShader.setFloat("pointLight.constant", pointLight.constant);
-        modelShader.setFloat("pointLight.linear", pointLight.linear);
-        modelShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        modelShader.setVec3("viewPosition", camera.Position);
-        modelShader.setFloat("material.shininess", 64.0f);
-        // view/projection transformations
+        pointLight.position = glm::vec3(1.0, 2.0, 5.0);
+        robotShader.setVec3("pointLight.position", pointLight.position);
+        robotShader.setVec3("pointLight.ambient", pointLight.ambient);
+        robotShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        robotShader.setVec3("pointLight.specular", pointLight.specular);
+        robotShader.setFloat("pointLight.constant", pointLight.constant);
+        robotShader.setFloat("pointLight.linear", pointLight.linear);
+        robotShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        robotShader.setVec3("viewPosition", camera.Position);
+        robotShader.setFloat("material.shininess", 64.0f);
+
+        //pogled?
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        modelShader.setMat4("projection", projection);
-        modelShader.setMat4("view", view);
+        robotShader.setMat4("projection", projection);
+        robotShader.setMat4("view", view);
 
-        // render the loaded model
+        // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        modelShader.setMat4("model", model);
-        ourModel.Draw(modelShader);
+        model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.5f));	// it's a bit too big for our scene, so scale it down
+        robotShader.setMat4("model", model);
+        robotModel.Draw(robotShader);
 
 
         // Draw Imgui
@@ -217,6 +226,15 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        robot_position.z -= robot_speed*deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        robot_position.z += robot_speed*deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        robot_position.x -= robot_speed*deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        robot_position.x += robot_speed*deltaTime;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

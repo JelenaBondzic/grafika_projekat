@@ -16,6 +16,8 @@ struct Vertex {
 
     glm::vec3 Tangent;
     glm::vec3 Bitangent;
+
+    glm::vec3 Color;
 };
 
 struct Texture {
@@ -29,6 +31,8 @@ public:
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
+
+    std::string glslIdentifierPrefix;
 
     Mesh(const std::vector<Vertex>& vs, const std::vector<unsigned int>& ind,
          const std::vector<Texture>& tex)
@@ -61,7 +65,9 @@ public:
                 ASSERT(false, "Unknown texture type");
             }
             name.append(number);
-            shader.setInt(name, i); // texture_diffuse1
+            std::cout << "Help\n";
+            shader.setInt(glslIdentifierPrefix + name, i); // texture_diffuse1
+//            glUniform1i(glGetUniformLocation(shader.ID, (glslIdentifierPrefix + name + number).c_str()), i);
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
         }
 
@@ -78,7 +84,7 @@ private:
         unsigned int VBO;
         unsigned int EBO;
 
-        glGenVertexArray(1, &VAO);
+        glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
 
@@ -104,6 +110,9 @@ private:
 
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, Bitangent)));
+
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Color));
 
         glBindVertexArray(0);
     }
