@@ -20,13 +20,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+unsigned int loadTexture(const char *path);
+
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 2.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 10.0f, 10.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -38,6 +40,9 @@ float lastFrame = 0.0f;
 //figure position
 glm::vec3 robot_position = glm::vec3(0.0f);
 float robot_speed = 2.0f;
+
+
+
 
 struct PointLight {
     glm::vec3 position;
@@ -118,7 +123,50 @@ int main()
     // -------------------------
 //    Shader robotShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader robotShader("resources/shaders/robot_shader.vs", "resources/shaders/robot_shader.fs");
+    Shader floorShader ("resources/shaders/floor.vs", "resources/shaders/floor.fs");
 
+    //koordinate podloge
+    float floorVertices[] = {
+            //positions           //Normal Coords //Tex Coords
+            5.0f, -0.5f,  5.0f,   0.0, 0.0, 0.1,   1.0f, 0.0f,
+            -5.0f, -0.5f,  5.0f,  0.0, 0.0, 0.1,   0.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0, 0.0, 0.1,   0.0f, 1.0f,
+
+            5.0f, -0.5f,  5.0f,   0.0, 0.0, 0.1,   1.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0, 0.0, 0.1,   0.0f, 1.0f,
+            5.0f, -0.5f, -5.0f,   0.0, 0.0, 0.1,   1.0f, 1.0f
+    };
+
+    //VAO i VBO za podlogu
+    unsigned int floorVAO, floorVBO;
+    glGenVertexArrays(1, &floorVAO);
+    glGenBuffers(1, &floorVBO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(floorVAO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+
+    //teksture za podlogu
+   // unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill.jpg").c_str());
+   // unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill1.jpg").c_str());
+
+    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metal_pattern.jpg").c_str());
+    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalpattern.png").c_str());
+
+
+    floorShader.use();
+    floorShader.setInt("material.diffuse", 0);
+    floorShader.setInt("material.specular", 1);
 
     // load models
     // -----------
@@ -162,6 +210,36 @@ int main()
 
         // don't forget to enable shader before setting uniforms
 
+
+        //floor
+        floorShader.use();
+        floorShader.setVec3("light.position", glm::vec3(4.0, 4.0, 4.0));
+        floorShader.setVec3("light.ambient", glm::vec3(0.4, 0.4, 0.2));
+        floorShader.setVec3("light.diffuse", glm::vec3(0.6, 0.5, 0.6));
+        floorShader.setVec3("light.specular", glm::vec3(1.0, 1.0, 1.0));
+        floorShader.setVec3("viewPos", camera.Position);
+        floorShader.setFloat("material.shininess", 64.0f);
+
+        // view/projection transformations
+        glm::mat4 projection1 = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view1 = camera.GetViewMatrix();
+        floorShader.setMat4("projection", projection1);
+        floorShader.setMat4("view", view1);
+
+        // world transformation
+        glm::mat4 model1 = glm::mat4(1.0f);
+        model1 = glm::translate(model1, glm::vec3(0.0, 0.88, 0.0));
+        floorShader.setMat4("model", model1);
+        //difuzna mapa
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        //spekularna mapa
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
+
+        glBindVertexArray(floorVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
         //Drawing figure
         robotShader.use();
 
@@ -185,7 +263,7 @@ int main()
         // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.5f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
         robotShader.setMat4("model", model);
         robotModel.Draw(robotShader);
 
@@ -338,4 +416,41 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
+}
+
+unsigned int loadTexture(char const * path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
 }
