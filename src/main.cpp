@@ -12,6 +12,7 @@
 #include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
+#include <learnopengl/sphere_camera.h>
 #include <learnopengl//model.h>
 #include <rg/Error.h>
 #include <iostream>
@@ -28,7 +29,8 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 10.0f, 10.0f));
+//Camera camera(glm::vec3(0.0f, 10.0f, 10.0f));
+SphereCamera camera = SphereCamera(10.0);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -42,6 +44,8 @@ glm::vec3 robot_position = glm::vec3(0.0f);
 float robot_speed = 2.0f;
 float robot_rotate = 0;
 
+// pozicija do koje figura sm da ide po x i z
+float floor_size = 5.0;
 
 struct PointLight {
     glm::vec3 position;
@@ -228,6 +232,7 @@ int main()
         // world transformation
         glm::mat4 model1 = glm::mat4(1.0f);
         model1 = glm::translate(model1, glm::vec3(0.0, 0.88, 0.0));
+//        model1 = glm::scale(model1, glm::vec3(2.0));
         floorShader.setMat4("model", model1);
         //difuzna mapa
         glActiveTexture(GL_TEXTURE0);
@@ -308,19 +313,28 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
         robot_position.z -= robot_speed*deltaTime;
         robot_rotate = 180.0f;
+        if(robot_position.z < -floor_size)
+            robot_position.z = -floor_size;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
         robot_position.z += robot_speed*deltaTime;
         robot_rotate = 0.0f;
+        if(robot_position.z > floor_size)
+            robot_position.z = floor_size;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
         robot_position.x -= robot_speed*deltaTime;
         robot_rotate = -90.0f;
+        if(robot_position.x < -floor_size)
+            robot_position.x = -floor_size;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
         robot_position.x += robot_speed*deltaTime;
         robot_rotate = 90.0f;
+        if(robot_position.x > floor_size)
+            robot_position.x = floor_size;
     }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

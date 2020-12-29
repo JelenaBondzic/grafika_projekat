@@ -100,15 +100,22 @@ private:
 
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
+        // boja za mesh ako nema teksturu
         aiColor3D diffuse(0.0f);
-        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse); //boja koju ce dobiti mesh
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+        aiColor3D specular(0.0f);
+        material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
+        aiColor3D ambient(0.0f);
+        material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
 
         // walk through each of the mesh's vertices
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
             Vertex vertex;
 
-            vertex.Color = glm::vec4(diffuse.r, diffuse.g, diffuse.b, 1.0);
+            vertex.DiffuseColor = glm::vec4(diffuse.r, diffuse.g, diffuse.b, 1.0);
+            vertex.AmbientColor = glm::vec4(ambient.r, ambient.g, ambient.b, 1.0);
+            vertex.SpecularColor = glm::vec4(specular.r, specular.g, specular.b, 1.0);
 
             glm::vec3 vector; // we declare a placeholder vector since assimp_ uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
             // positions
