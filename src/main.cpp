@@ -44,7 +44,10 @@ glm::vec3 robot_position = glm::vec3(0.0f);
 float robot_speed = 2.0f;
 float robot_rotate = 0;
 
-// pozicija do koje figura sm da ide po x i z
+//pozicija baterije
+glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
+
+// pozicija do koje figura i baterija smeju da idu po x i z
 float floor_size = 5.0;
 
 struct PointLight {
@@ -128,6 +131,7 @@ int main()
     Shader robotShader("resources/shaders/robot_shader.vs", "resources/shaders/robot_shader.fs");
     Shader floorShader ("resources/shaders/floor.vs", "resources/shaders/floor.fs");
 
+
     //koordinate podloge
     float floorVertices[] = {
             //positions           //Normal Coords //Tex Coords
@@ -175,6 +179,7 @@ int main()
     // -----------
 //    Model robotModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
     Model robotModel(FileSystem::getPath("resources/objects/robot_figure/flying-robot.obj"));
+    Model batteryModel(FileSystem::getPath("resources/objects/battery2/9v.obj"));
 
     robotModel.SetShaderTextureNamePrefix("material.");
     PointLight pointLight;
@@ -244,7 +249,7 @@ int main()
         glBindVertexArray(floorVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        //Drawing figure
+        //Crtanje robota
         robotShader.use();
 
         pointLight.position = glm::vec3(1.0, 2.0, 5.0);
@@ -266,11 +271,24 @@ int main()
 
         // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 model2 = glm::mat4(1.0f);
+
         model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
+        model2 = glm::translate(model2, glm::vec3(battery_position.x, battery_position.y+sin(glfwGetTime()) / 7, battery_position.z)); // translate it down so it's at the center of the scene
+
         model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
+        model2 = glm::scale(model2, glm::vec3(0.2f));	// it's a bit too big for our scene, so scale it down
+
+
         model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
         robotShader.setMat4("model", model);
+
+
         robotModel.Draw(robotShader);
+
+        robotShader.setMat4("model", model2);
+        batteryModel.Draw(robotShader);
+
 
 
         // Draw Imgui
