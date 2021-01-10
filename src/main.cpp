@@ -22,7 +22,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
-
+void new_treat();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -43,6 +43,13 @@ float lastFrame = 0.0f;
 glm::vec3 robot_position = glm::vec3(0.0f);
 float robot_speed = 2.0f;
 float robot_rotate = 0;
+
+int points = 0;
+
+//
+bool is_speed_treat
+= true;
+glm::vec3 speed_treat_position = glm::vec3(0.0, 0.5, 1.0);
 
 //pozicija baterije
 glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
@@ -124,13 +131,16 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 
     // build and compile shaders
     // -------------------------
 //    Shader robotShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader robotShader("resources/shaders/robot_shader.vs", "resources/shaders/robot_shader.fs");
     Shader floorShader ("resources/shaders/floor.vs", "resources/shaders/floor.fs");
-
+    Shader cubeShader("resources/shaders/cubeShader.vs", "resources/shaders/cubeShader.fs");
 
     //koordinate podloge
     float floorVertices[] = {
@@ -143,6 +153,70 @@ int main()
             -5.0f, -0.5f, -5.0f,  0.0, 0.0, 0.1,   0.0f, 1.0f,
             5.0f, -0.5f, -5.0f,   0.0, 0.0, 0.1,   1.0f, 1.0f
     };
+
+    float cubeVertices[] = {
+            // positions          // normals           // texture coords
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+    };
+
+    // za stencil testing kocku
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+
+    glStencilMask(0x00);
+
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof (cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(cubeVAO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
 
     //VAO i VBO za podlogu
     unsigned int floorVAO, floorVBO;
@@ -198,6 +272,7 @@ int main()
     glm::vec4 clearColor = glm::vec4(0.8f, 0.4f, 0.5f, 1.0f);
     // render loop
     // -----------
+    new_treat(); //postavlja prvu bateriju/kocku za ubrzanje
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -214,7 +289,10 @@ int main()
         // render
         // ------
         glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0x00);
 
         // don't forget to enable shader before setting uniforms
 
@@ -279,16 +357,48 @@ int main()
         model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
         model2 = glm::scale(model2, glm::vec3(0.2f));	// it's a bit too big for our scene, so scale it down
 
-
         model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
         robotShader.setMat4("model", model);
-
 
         robotModel.Draw(robotShader);
 
         robotShader.setMat4("model", model2);
+
         batteryModel.Draw(robotShader);
 
+
+        if(is_speed_treat){
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+
+            cubeShader.use();
+            model = glm::mat4(1.0);
+            model = glm::translate(model,battery_position);
+//            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0, 0.0, 0.0));
+            model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 0.5, 0.0));
+            model = glm::scale(model, glm::vec3(1.5));
+
+            cubeShader.setMat4("view", camera.GetViewMatrix());
+            cubeShader.setMat4("model", model);
+            cubeShader.setMat4("projection", projection);
+            cubeShader.setVec3("color",glm::vec3(0.0f, 0.0f, 0.0f));
+            glBindVertexArray(cubeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            glDisable(GL_DEPTH_TEST);
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+
+            model = glm::scale(model, glm::vec3(1.2f));
+            cubeShader.setMat4("model", model);
+            cubeShader.setVec3("color",glm::vec3(1.0f, 1.0f, 1.0f));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            glBindVertexArray(0);
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glEnable(GL_DEPTH_TEST);
+        }
 
 
         // Draw Imgui
@@ -353,6 +463,11 @@ void processInput(GLFWwindow *window)
             robot_position.x = floor_size;
     }
 
+    if(pow(battery_position.x-robot_position.x, 2) + pow(battery_position.z-robot_position.z, 2) < 0.2){
+        points ++;
+        if(is_speed_treat)
+            robot_speed += 0.1;
+        new_treat();}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -493,4 +608,25 @@ unsigned int loadTexture(char const * path)
     }
 
     return textureID;
+}
+
+void new_treat(){
+    srand(glfwGetTime());
+    if(rand()%10<3)
+        is_speed_treat = true;
+    else
+        is_speed_treat = false;
+
+//    is_speed_treat = true;
+
+    // bez negativnog dela bi obilazilo samo jedan kvadrant podloge
+    int sgn1 = -1;
+    int sgn2 = -1;
+    if(rand()%2==0)
+        sgn1 = 1;
+    if(rand()%2==0)
+        sgn2 = 1;
+
+    battery_position.x = (float)rand()/RAND_MAX * floor_size * sgn1;
+    battery_position.z = (float)rand()/RAND_MAX * floor_size * sgn2;
 }
