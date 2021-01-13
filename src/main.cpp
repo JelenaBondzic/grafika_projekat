@@ -47,12 +47,12 @@ float robot_rotate = 0;
 int points = 0;
 
 //
-bool is_speed_treat
-= true;
+bool is_speed_treat = true;
 glm::vec3 speed_treat_position = glm::vec3(0.0, 0.5, 1.0);
+float scale_treat = 1.0f;
 
 //pozicija baterije
-glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
+glm::vec3 battery_position = glm::vec3(0.5f, 0.8f, 1.0);
 
 // pozicija do koje figura i baterija smeju da idu po x i z
 float floor_size = 5.0;
@@ -364,6 +364,7 @@ int main()
 
         robotShader.setMat4("model", model2);
 
+        if(!is_speed_treat)
         batteryModel.Draw(robotShader);
 
 
@@ -375,13 +376,18 @@ int main()
             model = glm::mat4(1.0);
             model = glm::translate(model,battery_position);
 //            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0, 0.0, 0.0));
-            model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 0.5, 0.0));
-            model = glm::scale(model, glm::vec3(1.5));
+           // model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 0.5, 0.0));
+//            model = glm::scale(model, glm::vec3(0.8));
+//            model = glm::scale(model, glm::vec3(sin(glfwGetTime()/3)/2+0.5));
+            model = glm::scale(model, glm::vec3(scale_treat));
+            scale_treat -= deltaTime/8;
+            if(scale_treat<=0)
+                new_treat();
 
             cubeShader.setMat4("view", camera.GetViewMatrix());
             cubeShader.setMat4("model", model);
             cubeShader.setMat4("projection", projection);
-            cubeShader.setVec3("color",glm::vec3(0.0f, 0.0f, 0.0f));
+            cubeShader.setVec4("color",glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -391,7 +397,7 @@ int main()
 
             model = glm::scale(model, glm::vec3(1.2f));
             cubeShader.setMat4("model", model);
-            cubeShader.setVec3("color",glm::vec3(1.0f, 1.0f, 1.0f));
+            cubeShader.setVec4("color",glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             glBindVertexArray(0);
@@ -612,12 +618,19 @@ unsigned int loadTexture(char const * path)
 
 void new_treat(){
     srand(glfwGetTime());
-    if(rand()%10<3)
+    if(rand()%10<3){
         is_speed_treat = true;
-    else
+        battery_position.y = 0.8;
+        scale_treat = 1.0f;
+    }
+    else{
         is_speed_treat = false;
+        battery_position.y = 0.33;
+    }
 
+//    scale_treat = 1.0f;
 //    is_speed_treat = true;
+//    battery_position.y = 0.8;
 
     // bez negativnog dela bi obilazilo samo jedan kvadrant podloge
     int sgn1 = -1;
