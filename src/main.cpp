@@ -48,15 +48,16 @@ float robot_rotate = 0;
 int points = 0;
 
 //
-bool is_speed_treat
-= true;
-glm::vec3 speed_treat_position = glm::vec3(0.0, 0.5, 1.0);
+bool is_speed_treat= true;
+float scale_treat = 1.0f;
 
 //pozicija baterije
 glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
 
 // pozicija do koje figura i baterija smeju da idu po x i z
 float floor_size = 5.0;
+
+float ambient_light = 0.5;
 
 struct PointLight {
     glm::vec3 position;
@@ -70,10 +71,10 @@ struct PointLight {
     float quadratic;
 };
 
+
 bool RenderImGuiEnabled = false;
 void DrawImGui(glm::vec4& clearColor);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
 
 int main()
 {
@@ -149,13 +150,13 @@ int main()
     //koordinate podloge
     float floorVertices[] = {
             //positions           //Normal Coords //Tex Coords
-            5.0f, -0.5f,  5.0f,   0.0, 0.0, 0.1,   1.0f, 0.0f,
-            -5.0f, -0.5f,  5.0f,  0.0, 0.0, 0.1,   0.0f, 0.0f,
-            -5.0f, -0.5f, -5.0f,  0.0, 0.0, 0.1,   0.0f, 1.0f,
+            5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
+            -5.0f, -0.5f,  5.0f,  0.0, 1.0, 0.0,   0.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
 
-            5.0f, -0.5f,  5.0f,   0.0, 0.0, 0.1,   1.0f, 0.0f,
-            -5.0f, -0.5f, -5.0f,  0.0, 0.0, 0.1,   0.0f, 1.0f,
-            5.0f, -0.5f, -5.0f,   0.0, 0.0, 0.1,   1.0f, 1.0f
+            5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
+            5.0f, -0.5f, -5.0f,   0.0, 1.0, 0.0,   1.0f, 1.0f
     };
 
     float cubeVertices[] = {
@@ -328,19 +329,20 @@ int main()
 
     // load models
     // -----------
-//    Model robotModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
     Model robotModel(FileSystem::getPath("resources/objects/robot_figure/flying-robot.obj"));
     Model batteryModel(FileSystem::getPath("resources/objects/battery2/9v.obj"));
 
     robotModel.SetShaderTextureNamePrefix("material.");
-    PointLight pointLight;
-    pointLight.ambient = glm::vec3(0.4, 0.4, 0.2);
-    pointLight.diffuse = glm::vec3(0.6, 0.5, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
-    pointLight.position = glm::vec3(4.0, 4.0, 4.0);
+
+    PointLight cameraPointLight;
+    cameraPointLight.position = camera.getPosition();
+    cameraPointLight.ambient = glm::vec3(ambient_light);
+    cameraPointLight.diffuse = glm::vec3(0.8);
+    cameraPointLight.specular = glm::vec3(2.0);
+    cameraPointLight.constant = 1.0f;
+    cameraPointLight.linear = 0.01;
+    cameraPointLight.quadratic = 0.05;
+
 
 
     // draw in wireframe
@@ -352,6 +354,9 @@ int main()
     new_treat(); //postavlja prvu bateriju/kocku za ubrzanje
     while (!glfwWindowShouldClose(window))
     {
+        cameraPointLight.ambient = glm::vec3(ambient_light);
+        cameraPointLight.position = camera.getPosition();
+
         // per-frame time logic
         // --------------------
         float currentFrame = glfwGetTime();
@@ -371,17 +376,34 @@ int main()
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         glStencilMask(0x00);
 
-        // don't forget to enable shader before setting uniforms
-
-
         //floor
         floorShader.use();
-        floorShader.setVec3("light.position", glm::vec3(4.0, 4.0, 4.0));
-        floorShader.setVec3("light.ambient", glm::vec3(0.4, 0.4, 0.2));
-        floorShader.setVec3("light.diffuse", glm::vec3(0.6, 0.5, 0.6));
-        floorShader.setVec3("light.specular", glm::vec3(1.0, 1.0, 1.0));
         floorShader.setVec3("viewPos", camera.Position);
         floorShader.setFloat("material.shininess", 64.0f);
+
+        floorShader.setVec3("dirlight.direction", glm::vec3(0.0, 4.0, 0.0));
+        floorShader.setVec3("dirlight.ambient", glm::vec3(0.1));
+        floorShader.setVec3("dirlight.diffuse", glm::vec3(0.5));
+        floorShader.setVec3("dirlight.specular", glm::vec3(1.0));
+
+        floorShader.setVec3("pointlight.position", cameraPointLight.position);
+        floorShader.setVec3("pointlight.ambient", cameraPointLight.ambient);
+        floorShader.setVec3("pointlight.diffuse", cameraPointLight.diffuse);
+        floorShader.setVec3("pointlight.specular", cameraPointLight.specular);
+        floorShader.setFloat("pointlight.constant", cameraPointLight.constant);
+        floorShader.setFloat("pointlight.linear", cameraPointLight.linear);
+        floorShader.setFloat("pointlight.quadratic", cameraPointLight.quadratic);
+
+        floorShader.setVec3("spotlight.position", robot_position + glm::vec3(0.0, 6.0, 0.0));
+        floorShader.setVec3("spotlight.direction", glm::vec3(0.0, -1.0, 0.0));
+        floorShader.setVec3("spotlight.ambient", glm::vec3(0.5));
+        floorShader.setVec3("spotlight.diffuse", glm::vec3(1.0));
+        floorShader.setVec3("spotlight.specular", glm::vec3(1.0));
+        floorShader.setFloat("spotlight.constant", 1);
+        floorShader.setFloat("spotlight.linear", 0.07);
+        floorShader.setFloat("spotlight.quadratic", 0.08);
+        floorShader.setFloat("spotlight.cutOff", glm::cos(glm::radians(5.0)));
+        floorShader.setFloat("spotlight.outerCutOff", glm::cos(glm::radians(10.0)));
 
         // view/projection transformations
         glm::mat4 projection1 = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -407,18 +429,17 @@ int main()
         //Crtanje robota
         robotShader.use();
 
-        pointLight.position = glm::vec3(1.0, 2.0, 5.0);
-        robotShader.setVec3("pointLight.position", pointLight.position);
-        robotShader.setVec3("pointLight.ambient", pointLight.ambient);
-        robotShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        robotShader.setVec3("pointLight.specular", pointLight.specular);
-        robotShader.setFloat("pointLight.constant", pointLight.constant);
-        robotShader.setFloat("pointLight.linear", pointLight.linear);
-        robotShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        robotShader.setVec3("pointLight.position", cameraPointLight.position);
+        robotShader.setVec3("pointLight.ambient", cameraPointLight.ambient);
+        robotShader.setVec3("pointLight.diffuse", cameraPointLight.diffuse);
+        robotShader.setVec3("pointLight.specular", cameraPointLight.specular);
+        robotShader.setFloat("pointLight.constant", cameraPointLight.constant);
+        robotShader.setFloat("pointLight.linear", cameraPointLight.linear);
+        robotShader.setFloat("pointLight.quadratic", cameraPointLight.quadratic);
+
         robotShader.setVec3("viewPosition", camera.Position);
         robotShader.setFloat("material.shininess", 64.0f);
 
-        //pogled?
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         robotShader.setMat4("projection", projection);
@@ -445,6 +466,22 @@ int main()
             batteryModel.Draw(robotShader);
 
 
+
+        // crtanje skyboxa
+        glDepthFunc(GL_LEQUAL);
+        skyBoxShader.use();
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // pomeramo translaciju iz view matrice
+        skyBoxShader.setMat4("view", view);
+        skyBoxShader.setMat4("projection", projection);
+
+        // skybox kocka
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
+
         if(is_speed_treat){
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
@@ -452,14 +489,15 @@ int main()
             cubeShader.use();
             model = glm::mat4(1.0);
             model = glm::translate(model,battery_position);
-//            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0, 0.0, 0.0));
-            model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 0.5, 0.0));
-            model = glm::scale(model, glm::vec3(0.5));
+            model = glm::scale(model, glm::vec3(scale_treat));
+            scale_treat -= deltaTime/8;
+            if(scale_treat<=0)
+                new_treat();
 
             cubeShader.setMat4("view", camera.GetViewMatrix());
             cubeShader.setMat4("model", model);
             cubeShader.setMat4("projection", projection);
-            cubeShader.setVec3("color",glm::vec3(0.0f, 0.0f, 0.0f));
+            cubeShader.setVec4("color",glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -469,7 +507,7 @@ int main()
 
             model = glm::scale(model, glm::vec3(1.2f));
             cubeShader.setMat4("model", model);
-            cubeShader.setVec3("color",glm::vec3(1.0f, 1.0f, 1.0f));
+            cubeShader.setVec4("color",glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             glBindVertexArray(0);
@@ -484,19 +522,6 @@ int main()
             DrawImGui(clearColor);
         }
 
-        // crtanje skyboxa
-        glDepthFunc(GL_LEQUAL);
-        skyBoxShader.use();
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // pomeramo translaciju iz view matrice
-        skyBoxShader.setMat4("view", view);
-        skyBoxShader.setMat4("projection", projection);
-        // skybox kocka
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
 
 
         glfwSwapBuffers(window);
@@ -555,6 +580,17 @@ void processInput(GLFWwindow *window)
         if(robot_position.x > floor_size)
             robot_position.x = floor_size;
     }
+    if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS){
+        ambient_light -= 0.1;
+        if(ambient_light<0.1)
+            ambient_light = 0.1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS){
+        ambient_light += 0.1;
+        if(ambient_light>3)
+            ambient_light = 3;
+    }
+
 
     if(pow(battery_position.x-robot_position.x, 2) + pow(battery_position.z-robot_position.z, 2) < 0.2){
         points ++;
@@ -708,11 +744,15 @@ void new_treat(){
     if(rand()%10<3) {
         is_speed_treat = true;
         battery_position.y = 0.8;
+        scale_treat =1.0f;
     }
     else {
         is_speed_treat = false;
         battery_position.y = 0.33;
     }
+
+//    scale_treat =1.0f;
+//    battery_position.y = 0.8;
 //    is_speed_treat = true;
 
     // bez negativnog dela bi obilazilo samo jedan kvadrant podloge
@@ -726,6 +766,7 @@ void new_treat(){
     battery_position.x = (float)rand()/RAND_MAX * floor_size * sgn1;
     battery_position.z = (float)rand()/RAND_MAX * floor_size * sgn2;
 }
+
 
 unsigned int loadCubeMap(vector<std::string> faces){
 

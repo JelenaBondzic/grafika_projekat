@@ -83,10 +83,10 @@ public:
         if (direction == RIGHT)
             anglePosition.y -= velocity;
 
-       // if (anglePosition.x > 1.2) // ne treba da ide preko oko 70 stepeni, otisao i ispod table
-         //   anglePosition.x = 1.2;
-       // if (anglePosition.x < 0.16) // ne teba da ide manje od oko 10 stepeni, prevrnula bi se kamera iznad table
-        //    anglePosition.x = 0.16;
+        if (anglePosition.x > 1.5) // ne treba da ide preko oko 70 stepeni, otisao i ispod table
+            anglePosition.x = 1.5;
+        if (anglePosition.x < 0.16) // ne teba da ide manje od oko 10 stepeni, prevrnula bi se kamera iznad table
+            anglePosition.x = 0.16;
 
 
         Position = glm::vec3 (r*sin(anglePosition.x)*cos(anglePosition.y),
@@ -124,6 +124,10 @@ public:
             Zoom = 10.0f;
         if (Zoom > 60.0f)
             Zoom = 60.0f;
+    }
+
+    glm::vec3 getPosition(){
+        return Position;
     }
 
 private:
