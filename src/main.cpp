@@ -23,6 +23,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 unsigned int loadTexture(const char *path);
 void new_treat();
+unsigned int loadCubeMap(vector<std::string> faces);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -30,7 +31,7 @@ const unsigned int SCR_HEIGHT = 600;
 
 // camera
 //Camera camera(glm::vec3(0.0f, 10.0f, 10.0f));
-SphereCamera camera = SphereCamera(10.0);
+SphereCamera camera = SphereCamera(14.0);
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -72,6 +73,8 @@ struct PointLight {
 bool RenderImGuiEnabled = false;
 void DrawImGui(glm::vec4& clearColor);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+
 int main()
 {
     // glfw: initialize and configure
@@ -111,7 +114,7 @@ int main()
     }
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
+   // stbi_set_flip_vertically_on_load(true);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -141,6 +144,7 @@ int main()
     Shader robotShader("resources/shaders/robot_shader.vs", "resources/shaders/robot_shader.fs");
     Shader floorShader ("resources/shaders/floor.vs", "resources/shaders/floor.fs");
     Shader cubeShader("resources/shaders/cubeShader.vs", "resources/shaders/cubeShader.fs");
+    Shader skyBoxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
     //koordinate podloge
     float floorVertices[] = {
@@ -199,6 +203,51 @@ int main()
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    float skyboxVertices[] = {
+            // positions
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f
+    };
+
     // za stencil testing kocku
     unsigned int cubeVAO, cubeVBO;
     glGenVertexArrays(1, &cubeVAO);
@@ -237,6 +286,19 @@ int main()
 
     glBindVertexArray(0);
 
+    // skybox VAO I VBO
+
+    unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+
+
     //teksture za podlogu
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill.jpg").c_str());
     unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill1.jpg").c_str());
@@ -244,10 +306,25 @@ int main()
 //    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metal_pattern.jpg").c_str());
 //    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalpattern.png").c_str());
 
+    //teksture za skybox
+    vector<std::string> faces
+            {
+
+                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/front.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/back.jpg")
+            };
+    unsigned int cubemapTexture = loadCubeMap(faces);
 
     floorShader.use();
     floorShader.setInt("material.diffuse", 0);
     floorShader.setInt("material.specular", 1);
+
+    skyBoxShader.use();
+    skyBoxShader.setInt("skybox", 0);
 
     // load models
     // -----------
@@ -269,7 +346,7 @@ int main()
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glm::vec4 clearColor = glm::vec4(0.8f, 0.4f, 0.5f, 1.0f);
+    glm::vec4 clearColor = glm::vec4( 0.439216f, 0.858824f,  0.576471f, 1.0f);
     // render loop
     // -----------
     new_treat(); //postavlja prvu bateriju/kocku za ubrzanje
@@ -364,7 +441,8 @@ int main()
 
         robotShader.setMat4("model", model2);
 
-        batteryModel.Draw(robotShader);
+        if(!is_speed_treat)
+            batteryModel.Draw(robotShader);
 
 
         if(is_speed_treat){
@@ -376,7 +454,7 @@ int main()
             model = glm::translate(model,battery_position);
 //            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0, 0.0, 0.0));
             model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0, 0.5, 0.0));
-            model = glm::scale(model, glm::vec3(1.5));
+            model = glm::scale(model, glm::vec3(0.5));
 
             cubeShader.setMat4("view", camera.GetViewMatrix());
             cubeShader.setMat4("model", model);
@@ -406,8 +484,21 @@ int main()
             DrawImGui(clearColor);
         }
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
+        // crtanje skyboxa
+        glDepthFunc(GL_LEQUAL);
+        skyBoxShader.use();
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // pomeramo translaciju iz view matrice
+        skyBoxShader.setMat4("view", view);
+        skyBoxShader.setMat4("projection", projection);
+        // skybox kocka
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -416,8 +507,10 @@ int main()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVBO);
+
+
     glfwTerminate();
     return 0;
 }
@@ -612,11 +705,14 @@ unsigned int loadTexture(char const * path)
 
 void new_treat(){
     srand(glfwGetTime());
-    if(rand()%10<3)
+    if(rand()%10<3) {
         is_speed_treat = true;
-    else
+        battery_position.y = 0.8;
+    }
+    else {
         is_speed_treat = false;
-
+        battery_position.y = 0.33;
+    }
 //    is_speed_treat = true;
 
     // bez negativnog dela bi obilazilo samo jedan kvadrant podloge
@@ -629,4 +725,36 @@ void new_treat(){
 
     battery_position.x = (float)rand()/RAND_MAX * floor_size * sgn1;
     battery_position.z = (float)rand()/RAND_MAX * floor_size * sgn2;
+}
+
+unsigned int loadCubeMap(vector<std::string> faces){
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA , width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+
 }
