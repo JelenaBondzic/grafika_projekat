@@ -304,19 +304,16 @@ int main()
     unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill.jpg").c_str());
     unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalgrill1.jpg").c_str());
 
-//    unsigned int diffuseMap = loadTexture(FileSystem::getPath("resources/textures/metal_pattern.jpg").c_str());
-//    unsigned int specularMap = loadTexture(FileSystem::getPath("resources/textures/metalpattern.png").c_str());
-
     //teksture za skybox
     vector<std::string> faces
             {
 
-                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/front.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/back.jpg")
+                    FileSystem::getPath("resources/textures/skybox/posx.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/negx.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/posy.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/negy.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/posz.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/negz.jpg")
             };
     unsigned int cubemapTexture = loadCubeMap(faces);
 
@@ -343,10 +340,6 @@ int main()
     cameraPointLight.linear = 0.01;
     cameraPointLight.quadratic = 0.05;
 
-
-
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glm::vec4 clearColor = glm::vec4( 0.439216f, 0.858824f,  0.576471f, 1.0f);
     // render loop
@@ -555,7 +548,6 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
         robot_position.z -= robot_speed*deltaTime;
         robot_rotate = 180.0f;
