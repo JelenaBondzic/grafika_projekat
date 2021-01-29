@@ -335,7 +335,7 @@ int main()
     cameraPointLight.position = camera.getPosition();
     cameraPointLight.ambient = glm::vec3(ambient_light);
     cameraPointLight.diffuse = glm::vec3(0.8);
-    cameraPointLight.specular = glm::vec3(2.0);
+    cameraPointLight.specular = glm::vec3(5.0);
     cameraPointLight.constant = 1.0f;
     cameraPointLight.linear = 0.01;
     cameraPointLight.quadratic = 0.05;
@@ -348,7 +348,7 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         cameraPointLight.ambient = glm::vec3(ambient_light);
-        cameraPointLight.position = camera.getPosition();
+        cameraPointLight.position = camera.getPosition() * glm::vec3(-0.5, 1.0, -0.5);
 
         // per-frame time logic
         // --------------------
