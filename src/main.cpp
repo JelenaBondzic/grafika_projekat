@@ -453,8 +453,9 @@ int main()
         // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
         model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
+        model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
+
         robotShader.setMat4("model", model);
 
         robotModel.Draw(robotShader);
