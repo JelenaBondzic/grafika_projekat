@@ -106,10 +106,10 @@ public:
         // make sure that when pitch is out of bounds, screen doesn't get flipped
         if (constrainPitch)
         {
-            if (Pitch > 200.0f)
-                Pitch = 200.0f;
-            if (Pitch < -200.0f)
-                Pitch = -200.0f;
+            if (Pitch > 90.0f)
+                Pitch = 90.0f;
+            if (Pitch < -90.0f)
+                Pitch = -90.0f;
         }
 
         // update Front, Right and Up Vectors using the updated Euler angles

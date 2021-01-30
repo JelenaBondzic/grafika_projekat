@@ -47,7 +47,6 @@ float robot_rotate = 0;
 
 int points = 0;
 
-//
 bool is_speed_treat= true;
 float scale_treat = 1.0f;
 
@@ -331,11 +330,12 @@ int main()
 
     robotModel.SetShaderTextureNamePrefix("material.");
 
+    // inicijalizacija pointlight
     PointLight cameraPointLight;
     cameraPointLight.position = camera.getPosition();
     cameraPointLight.ambient = glm::vec3(ambient_light);
     cameraPointLight.diffuse = glm::vec3(0.8);
-    cameraPointLight.specular = glm::vec3(5.0);
+    cameraPointLight.specular = glm::vec3(2.0);
     cameraPointLight.constant = 1.0f;
     cameraPointLight.linear = 0.01;
     cameraPointLight.quadratic = 0.05;
@@ -349,6 +349,7 @@ int main()
     {
         cameraPointLight.ambient = glm::vec3(ambient_light);
         cameraPointLight.position = camera.getPosition() * glm::vec3(-0.5, 1.0, -0.5);
+//        cameraPointLight.position = glm::vec3(0.0, 5.0, 0.0);
 
         // per-frame time logic
         // --------------------
@@ -372,7 +373,7 @@ int main()
         //floor
         floorShader.use();
         floorShader.setVec3("viewPos", camera.Position);
-        floorShader.setFloat("material.shininess", 64.0f);
+        floorShader.setFloat("material.shininess", 32.0f);
 
         floorShader.setVec3("dirlight.direction", glm::vec3(0.0, 4.0, 0.0));
         floorShader.setVec3("dirlight.ambient", glm::vec3(0.1));
@@ -431,7 +432,7 @@ int main()
         robotShader.setFloat("pointLight.quadratic", cameraPointLight.quadratic);
 
         robotShader.setVec3("viewPosition", camera.Position);
-        robotShader.setFloat("material.shininess", 64.0f);
+        robotShader.setFloat("material.shininess", 32.0f);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -440,24 +441,21 @@ int main()
 
         // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 model2 = glm::mat4(1.0f);
-
         model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
-        model2 = glm::translate(model2, glm::vec3(battery_position.x, battery_position.y+sin(glfwGetTime()) / 7, battery_position.z)); // translate it down so it's at the center of the scene
-
         model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
-        model2 = glm::scale(model2, glm::vec3(0.2f));	// it's a bit too big for our scene, so scale it down
-
         model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
         robotShader.setMat4("model", model);
 
         robotModel.Draw(robotShader);
 
-        robotShader.setMat4("model", model2);
-
-        if(!is_speed_treat)
+        //crtanje baterije
+        if(!is_speed_treat) {
+            glm::mat4 model2 = glm::mat4(1.0f);
+            model2 = glm::translate(model2, glm::vec3(battery_position.x, battery_position.y+sin(glfwGetTime()) / 7, battery_position.z)); // translate it down so it's at the center of the scene
+            model2 = glm::scale(model2, glm::vec3(0.2f));	// it's a bit too big for our scene, so scale it down
+            robotShader.setMat4("model", model2);
             batteryModel.Draw(robotShader);
-
+        }
 
 
         // crtanje skyboxa
@@ -475,6 +473,8 @@ int main()
         glBindVertexArray(0);
         glDepthFunc(GL_LESS); // set depth function back to default
 
+
+//        Crtanje kocke sa stencil efektom
         if(is_speed_treat){
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
@@ -490,7 +490,8 @@ int main()
             cubeShader.setMat4("view", camera.GetViewMatrix());
             cubeShader.setMat4("model", model);
             cubeShader.setMat4("projection", projection);
-            cubeShader.setVec4("color",glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+//            cubeShader.setVec4("color",glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            cubeShader.setVec4("color",(glm::vec4((glm::sin(glfwGetTime()*2)+1.0)/2.0, (glm::sin(glfwGetTime()*5)+1.0)/2.0, (glm::sin(glfwGetTime()*3)+1.0)/2.0, 1.0f)));
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -501,6 +502,7 @@ int main()
             model = glm::scale(model, glm::vec3(1.2f));
             cubeShader.setMat4("model", model);
             cubeShader.setVec4("color",glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+//            cubeShader.setVec4("color",(glm::vec4((glm::sin(glfwGetTime())+1.0)/2.0, (glm::cos(glfwGetTime())+1.0)/2.0, (glm::sin(glfwGetTime())+1.0)/2.0, 1.0f)));
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             glBindVertexArray(0);
@@ -528,6 +530,7 @@ int main()
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1, &skyboxVBO);
 
+    cout << "Osvojili ste "<< points << " poena :)"<<endl;
 
     glfwTerminate();
     return 0;
@@ -588,7 +591,8 @@ void processInput(GLFWwindow *window)
         points ++;
         if(is_speed_treat)
             robot_speed += 0.1;
-        new_treat();}
+        new_treat();
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
