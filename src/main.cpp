@@ -41,8 +41,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 //figure position
-glm::vec3 robot_position = glm::vec3(0.0f, 0.1f, 0.0f);
-float robot_speed = 1.5f;
+glm::vec3 robot_position = glm::vec3(0.0f);
+float robot_speed = 2.0f;
 float robot_rotate = 0;
 
 int points = 0;
@@ -114,7 +114,7 @@ int main()
     }
 
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-   // stbi_set_flip_vertically_on_load(true);
+    // stbi_set_flip_vertically_on_load(true);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -153,14 +153,9 @@ int main()
             -5.0f, -0.5f,  5.0f,  0.0, 1.0, 0.0,   0.0f, 0.0f,
             -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
 
-     //       5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
-       //     -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
+            5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
             5.0f, -0.5f, -5.0f,   0.0, 1.0, 0.0,   1.0f, 1.0f
-    };
-
-    unsigned int indices[] = {
-            0, 1, 3,  // prvi trougao
-            1, 2, 3   // drugi trougao
     };
 
     float cubeVertices[] = {
@@ -272,19 +267,15 @@ int main()
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
-    //VAO,VBO, EBO za podlogu
-    unsigned int floorVAO, floorVBO, floorEBO;
+    //VAO i VBO za podlogu
+    unsigned int floorVAO, floorVBO;
     glGenVertexArrays(1, &floorVAO);
     glGenBuffers(1, &floorVBO);
-    glGenBuffers(1, &floorEBO);
-
-    glBindVertexArray(floorVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindVertexArray(floorVAO);
 
     glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -293,7 +284,6 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
 
-   // glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     // skybox VAO I VBO
@@ -329,8 +319,6 @@ int main()
     floorShader.use();
     floorShader.setInt("material.diffuse", 0);
     floorShader.setInt("material.specular", 1);
-
-
 
     skyBoxShader.use();
     skyBoxShader.setInt("skybox", 0);
@@ -430,7 +418,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glBindVertexArray(floorVAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         //Crtanje robota
         robotShader.use();
@@ -446,11 +434,6 @@ int main()
         robotShader.setVec3("viewPosition", camera.Position);
         robotShader.setFloat("material.shininess", 32.0f);
 
-        robotShader.setVec3("dirlight.direction", glm::vec3(0.0, 4.0, 0.0));
-        robotShader.setVec3("dirlight.ambient", glm::vec3(0.1));
-        robotShader.setVec3("dirlight.diffuse", glm::vec3(0.5));
-        robotShader.setVec3("dirlight.specular", glm::vec3(1.0));
-
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         robotShader.setMat4("projection", projection);
@@ -458,9 +441,9 @@ int main()
 
         // pozicioniranje robota
         glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
-        model = glm::scale(model, glm::vec3(0.6f));	// it's a bit too big for our scene, so scale it down
         model = glm::translate(model, robot_position); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(0.4f));	// it's a bit too big for our scene, so scale it down
+        model = glm::rotate(model, glm::radians(robot_rotate), glm::vec3(0, 1, 0));
         robotShader.setMat4("model", model);
 
         robotModel.Draw(robotShader);
@@ -568,7 +551,6 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
         robot_position.z -= robot_speed*deltaTime;
         robot_rotate = 180.0f;
@@ -608,7 +590,7 @@ void processInput(GLFWwindow *window)
     if(pow(battery_position.x-robot_position.x, 2) + pow(battery_position.z-robot_position.z, 2) < 0.2){
         points ++;
         if(is_speed_treat)
-            robot_speed += 0.01;
+            robot_speed += 0.1;
         new_treat();
     }
 }
