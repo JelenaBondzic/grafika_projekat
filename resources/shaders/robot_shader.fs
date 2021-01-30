@@ -28,14 +28,6 @@ struct Material {
 
     float shininess;
 };
-// struct Material {
-//     sampler2D texture_diffuse1;
-//     sampler2D texture_specular1;
-//     sampler2D texture_ambient1;
-//
-//     float shininess;
-// };
-
 
 in vec2 TexCoords;
 in vec3 Normal;
