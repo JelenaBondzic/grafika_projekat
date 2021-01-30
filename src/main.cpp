@@ -153,9 +153,14 @@ int main()
             -5.0f, -0.5f,  5.0f,  0.0, 1.0, 0.0,   0.0f, 0.0f,
             -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
 
-            5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
-            -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
+     //       5.0f, -0.5f,  5.0f,   0.0, 1.0, 0.0,   1.0f, 0.0f,
+       //     -5.0f, -0.5f, -5.0f,  0.0, 1.0, 0.0,   0.0f, 1.0f,
             5.0f, -0.5f, -5.0f,   0.0, 1.0, 0.0,   1.0f, 1.0f
+    };
+
+    unsigned int indices[] = {
+            0, 1, 3,  // prvi trougao
+            1, 2, 3   // drugi trougao
     };
 
     float cubeVertices[] = {
@@ -267,15 +272,19 @@ int main()
     glEnableVertexAttribArray(2);
     glBindVertexArray(0);
 
-    //VAO i VBO za podlogu
-    unsigned int floorVAO, floorVBO;
+    //VAO,VBO, EBO za podlogu
+    unsigned int floorVAO, floorVBO, floorEBO;
     glGenVertexArrays(1, &floorVAO);
     glGenBuffers(1, &floorVBO);
+    glGenBuffers(1, &floorEBO);
+
+    glBindVertexArray(floorVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
 
-    glBindVertexArray(floorVAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -284,6 +293,7 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT,GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
     glEnableVertexAttribArray(2);
 
+   // glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     // skybox VAO I VBO
@@ -319,6 +329,8 @@ int main()
     floorShader.use();
     floorShader.setInt("material.diffuse", 0);
     floorShader.setInt("material.specular", 1);
+
+
 
     skyBoxShader.use();
     skyBoxShader.setInt("skybox", 0);
@@ -418,7 +430,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         glBindVertexArray(floorVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //Crtanje robota
         robotShader.use();
