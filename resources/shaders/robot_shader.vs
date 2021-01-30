@@ -9,7 +9,10 @@ layout (location = 7) in vec4 inSpecColor;
 out vec2 TexCoords;
 out vec3 Normal;
 out vec3 FragPos;
-out vec4 Color;
+
+out vec4 ambColor;
+out vec4 diffColor;
+out vec4 specColor;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -21,7 +24,10 @@ void main()
     Normal = aNormal;
     TexCoords = aTexCoords;
 
-    Color = inDiffColor;
+//    Color = inAmbColor;
+    ambColor = inAmbColor;
+    diffColor = inDiffColor;
+    specColor = inSpecColor;
 
-    gl_Position = projection * view * vec4(FragPos, 1.0);
+    gl_Position = projection * view * model * vec4(FragPos, 1.0);
 }
