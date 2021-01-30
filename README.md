@@ -12,7 +12,8 @@ Igrica robot.
 **Skybox:** okruženje
 
 **Stencil testing:** efekat na ivicama kocke koja se pojavljuje tokom igre
-#Uputstvo za igru
+
+# Uputstvo za igru
 Robot treba da skuplja baterje. Umesto baterije će se nekad pojaviti kocka koja se smanjuje. Ako robot sakupi kocku na vreme dobija ubrzanje.
 
 Robot se kreće pomoću strelica na tastaturi.
