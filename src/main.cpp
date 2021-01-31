@@ -48,7 +48,7 @@ float robot_rotate = 0;
 int points = 0;
 
 bool is_speed_treat= true;
-float scale_treat = 1.0f;
+float scale_treat = 0.6f;
 
 //pozicija baterije
 glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
@@ -555,7 +555,7 @@ int main()
 
             model = glm::mat4(1.0);
             model = glm::translate(model,battery_position);
-            model = glm::scale(model, glm::vec3(1.2));
+            model = glm::scale(model, glm::vec3(0.7));
             cubeShader.setMat4("model", model);
 
             cubeShader.setVec4("material.ambient",glm::vec4(1.0f));
@@ -799,7 +799,7 @@ void new_treat(){
     if(rand()%10<3) {
         is_speed_treat = true;
         battery_position.y = 0.8;
-        scale_treat =1.0f;
+        scale_treat =0.6f;
     }
     else {
         is_speed_treat = false;
