@@ -360,7 +360,7 @@ int main()
     DirLight dirLight;
     dirLight.direction = glm::vec3(0.0, -4.0, 0.0);
     dirLight.ambient = glm::vec3(0.2);
-    dirLight.diffuse = glm::vec3(0.2);
+    dirLight.diffuse = glm::vec3(0.5);
     dirLight.specular = glm::vec3(0.5);
 
     glm::vec4 clearColor = glm::vec4( 0.439216f, 0.858824f,  0.576471f, 1.0f);
