@@ -121,9 +121,9 @@ void main()
     vec3 viewDir = normalize(viewPos-FragPos);
 
     vec3 result = vec3(0);
-    result = CalcSpotLight(spotlight, norm, FragPos, viewDir);
-    result += 2.0*CalcPointLight(pointlight, norm, FragPos, viewDir);
-    result += CalcDirLight(dirlight, norm, viewDir);
+    result = 1.5*CalcSpotLight(spotlight, norm, FragPos, viewDir);
+    result += 0.8*CalcPointLight(pointlight, norm, FragPos, viewDir);
+    result += 0.8*CalcDirLight(dirlight, norm, viewDir);
 
     FragColor = vec4(result, 1.0);
 }
