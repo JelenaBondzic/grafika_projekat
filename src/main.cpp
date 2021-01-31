@@ -69,6 +69,8 @@ struct PointLight {
     float linear;
     float quadratic;
 };
+PointLight cameraPointLight;
+
 struct DirLight {
     glm::vec3 direction;
 
@@ -76,6 +78,7 @@ struct DirLight {
     glm::vec3 diffuse;
     glm::vec3 specular;
 };
+DirLight dirLight;
 
 
 bool RenderImGuiEnabled = false;
@@ -348,7 +351,6 @@ int main()
     robotModel.SetShaderTextureNamePrefix("material.");
 
     // inicijalizacija pointlight
-    PointLight cameraPointLight;
     cameraPointLight.position = camera.getPosition();
     cameraPointLight.ambient = glm::vec3(ambient_light);
     cameraPointLight.diffuse = glm::vec3(0.8);
@@ -357,7 +359,6 @@ int main()
     cameraPointLight.linear = 0.01;
     cameraPointLight.quadratic = 0.05;
 
-    DirLight dirLight;
     dirLight.direction = glm::vec3(0.0, -4.0, 0.0);
     dirLight.ambient = glm::vec3(0.2);
     dirLight.diffuse = glm::vec3(0.5);
@@ -644,6 +645,17 @@ void processInput(GLFWwindow *window)
         ambient_light += 0.05;
         if(ambient_light>1)
             ambient_light = 1;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS){
+        dirLight.ambient -= glm::vec3(0.05);
+        if(dirLight.ambient.x<0.2)
+            dirLight.ambient = glm::vec3(0.0);
+    }
+    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS){
+        dirLight.ambient += glm::vec3(0.05);
+        if(dirLight.ambient.x>1)
+            dirLight.ambient = glm::vec3(1);
     }
 
 
