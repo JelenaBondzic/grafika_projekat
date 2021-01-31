@@ -56,7 +56,7 @@ glm::vec3 battery_position = glm::vec3(0.5f, 0.3f, 1.0);
 // pozicija do koje figura i baterija smeju da idu po x i z
 float floor_size = 5.0;
 
-float ambient_light = 0.5;
+float ambient_light = 0.2;
 
 struct PointLight {
     glm::vec3 position;
@@ -68,6 +68,13 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
+};
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
 };
 
 
@@ -345,11 +352,16 @@ int main()
     cameraPointLight.position = camera.getPosition();
     cameraPointLight.ambient = glm::vec3(ambient_light);
     cameraPointLight.diffuse = glm::vec3(0.8);
-    cameraPointLight.specular = glm::vec3(2.0);
+    cameraPointLight.specular = glm::vec3(0.9);
     cameraPointLight.constant = 1.0f;
     cameraPointLight.linear = 0.01;
     cameraPointLight.quadratic = 0.05;
 
+    DirLight dirLight;
+    dirLight.direction = glm::vec3(0.0, -4.0, 0.0);
+    dirLight.ambient = glm::vec3(0.2);
+    dirLight.diffuse = glm::vec3(0.2);
+    dirLight.specular = glm::vec3(0.5);
 
     glm::vec4 clearColor = glm::vec4( 0.439216f, 0.858824f,  0.576471f, 1.0f);
     // render loop
@@ -357,8 +369,11 @@ int main()
     new_treat(); //postavlja prvu bateriju/kocku za ubrzanje
     while (!glfwWindowShouldClose(window))
     {
-        cameraPointLight.ambient = glm::vec3(ambient_light);
-        cameraPointLight.position = camera.getPosition() * glm::vec3(-0.5, 1.0, -0.5);
+//        cameraPointLight.ambient = glm::vec3(ambient_light);
+        cameraPointLight.ambient = glm::vec3(0.5);
+//        cameraPointLight.position = camera.getPosition() * glm::vec3(-0.5, 1.0, -0.5);
+//        cameraPointLight.position = camera.getPosition() * glm::vec3(-1, 1.0, -1);
+        cameraPointLight.position = camera.getPosition() + glm::vec3(0.0, 4.0, 0.0);
 //        cameraPointLight.position = glm::vec3(0.0, 5.0, 0.0);
 
         // per-frame time logic
@@ -385,10 +400,10 @@ int main()
         floorShader.setVec3("viewPos", camera.Position);
         floorShader.setFloat("material.shininess", 32.0f);
 
-        floorShader.setVec3("dirlight.direction", glm::vec3(0.0, 4.0, 0.0));
-        floorShader.setVec3("dirlight.ambient", glm::vec3(0.1));
-        floorShader.setVec3("dirlight.diffuse", glm::vec3(0.5));
-        floorShader.setVec3("dirlight.specular", glm::vec3(1.0));
+        floorShader.setVec3("dirlight.direction", dirLight.direction);
+        floorShader.setVec3("dirlight.ambient", dirLight.ambient);
+        floorShader.setVec3("dirlight.diffuse", dirLight.diffuse);
+        floorShader.setVec3("dirlight.specular", dirLight.specular);
 
         floorShader.setVec3("pointlight.position", cameraPointLight.position);
         floorShader.setVec3("pointlight.ambient", cameraPointLight.ambient);
@@ -400,7 +415,8 @@ int main()
 
         floorShader.setVec3("spotlight.position", robot_position + glm::vec3(0.0, 6.0, 0.0));
         floorShader.setVec3("spotlight.direction", glm::vec3(0.0, -1.0, 0.0));
-        floorShader.setVec3("spotlight.ambient", glm::vec3(0.5));
+        floorShader.setVec3("spotlight.ambient", glm::vec3(ambient_light));
+//        floorShader.setVec3("spotlight.ambient", glm::vec3(0.5));
         floorShader.setVec3("spotlight.diffuse", glm::vec3(1.0));
         floorShader.setVec3("spotlight.specular", glm::vec3(1.0));
         floorShader.setFloat("spotlight.constant", 1);
@@ -441,6 +457,11 @@ int main()
         robotShader.setFloat("pointLight.constant", cameraPointLight.constant);
         robotShader.setFloat("pointLight.linear", cameraPointLight.linear);
         robotShader.setFloat("pointLight.quadratic", cameraPointLight.quadratic);
+
+        robotShader.setVec3("dirLight.direction", dirLight.direction);
+        robotShader.setVec3("dirLight.ambient", dirLight.ambient);
+        robotShader.setVec3("dirLight.diffuse", dirLight.diffuse);
+        robotShader.setVec3("dirLight.specular", dirLight.specular);
 
         robotShader.setVec3("viewPosition", camera.Position);
         robotShader.setFloat("material.shininess", 32.0f);
@@ -503,7 +524,27 @@ int main()
             cubeShader.setMat4("model", model);
             cubeShader.setMat4("projection", projection);
 //            cubeShader.setVec4("color",glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-            cubeShader.setVec4("color",(glm::vec4((glm::sin(glfwGetTime()*2)+1.0)/2.0, (glm::sin(glfwGetTime()*5)+1.0)/2.0, (glm::sin(glfwGetTime()*3)+1.0)/2.0, 1.0f)));
+
+            cubeShader.setVec4("material.ambient",glm::vec4((glm::sin(glfwGetTime()*2)+1.0)/2.0, (glm::sin(glfwGetTime()*5)+1.0)/2.0, (glm::sin(glfwGetTime()*3)+1.0)/2.0, 1.0f));
+            cubeShader.setVec4("material.diffuse",glm::vec4((glm::sin(glfwGetTime()*5)+1.0)/2.0, (glm::sin(glfwGetTime()*3)+1.0)/2.0, (glm::sin(glfwGetTime()*2)+1.0)/2.0, 1.0f));
+            cubeShader.setVec4("material.specular",glm::vec4(1.0));
+            cubeShader.setFloat("material.shininess", 16.0);
+
+            //svetlo se postavlja jednom i samo koristi za sldecu kocku
+            cubeShader.setVec3("pointLight.position", cameraPointLight.position);
+            cubeShader.setVec3("pointLight.ambient", cameraPointLight.ambient);
+            cubeShader.setVec3("pointLight.diffuse", cameraPointLight.diffuse);
+            cubeShader.setVec3("pointLight.specular", cameraPointLight.specular);
+            cubeShader.setFloat("pointLight.constant", cameraPointLight.constant);
+            cubeShader.setFloat("pointLight.linear", cameraPointLight.linear);
+            cubeShader.setFloat("pointLight.quadratic", cameraPointLight.quadratic);
+
+            cubeShader.setVec3("dirlight.direction", dirLight.direction);
+            cubeShader.setVec3("dirlight.ambient", dirLight.ambient);
+            cubeShader.setVec3("dirlight.diffuse", dirLight.diffuse);
+            cubeShader.setVec3("dirlight.specular", dirLight.specular);
+
+
             glBindVertexArray(cubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -511,10 +552,16 @@ int main()
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilMask(0x00);
 
-            model = glm::scale(model, glm::vec3(1.2f));
+
+            model = glm::mat4(1.0);
+            model = glm::translate(model,battery_position);
+            model = glm::scale(model, glm::vec3(1.2));
             cubeShader.setMat4("model", model);
-            cubeShader.setVec4("color",glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-//            cubeShader.setVec4("color",(glm::vec4((glm::sin(glfwGetTime())+1.0)/2.0, (glm::cos(glfwGetTime())+1.0)/2.0, (glm::sin(glfwGetTime())+1.0)/2.0, 1.0f)));
+
+            cubeShader.setVec4("material.ambient",glm::vec4(1.0f));
+            cubeShader.setVec4("material.diffuse",glm::vec4(1.0));
+            cubeShader.setVec4("material.specular",glm::vec4(0.5,0.2,0.4, 1.0f));
+
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             glBindVertexArray(0);
@@ -588,14 +635,14 @@ void processInput(GLFWwindow *window)
             robot_position.x = floor_size;
     }
     if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS){
-        ambient_light -= 0.1;
-        if(ambient_light<0.1)
-            ambient_light = 0.1;
+        ambient_light -= 0.05;
+        if(ambient_light<0.2)
+            ambient_light = 0.0;
     }
     if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS){
-        ambient_light += 0.1;
-        if(ambient_light>3)
-            ambient_light = 3;
+        ambient_light += 0.05;
+        if(ambient_light>1)
+            ambient_light = 1;
     }
 
 
