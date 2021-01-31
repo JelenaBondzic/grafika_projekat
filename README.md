@@ -5,7 +5,7 @@ Igrica robot.
 
 **Tekstura:** podloga
 
-**Svetlo:** direkciono, pointlight i spotlight na podlogu; pointlight na robota
+**Svetlo:** direkciono, pointlight na sve; spotlight na podlogu
 
 **Shaders:** floor, robot_shader, skybox i cubeShader
 
@@ -20,4 +20,4 @@ Robot se kreće pomoću strelica na tastaturi.
 
 Kamera može da se kreće po polusferi iznad podloge pritiskom na A, S, D i W. Zumiranje je moguće pomoću scroll.
 
-Intenzitet svetlosti može da se povećava i smanjuje pritiskom na + odnosnos -.
+Intenzitet svetlosti ispod robota može da se povećava i smanjuje pritiskom na + odnosnos -, a intenzitet svetlosti moze da se menja na 4 i 6.
