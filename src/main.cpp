@@ -417,7 +417,8 @@ int main()
         floorShader.setVec3("spotlight.direction", glm::vec3(0.0, -1.0, 0.0));
         floorShader.setVec3("spotlight.ambient", glm::vec3(ambient_light));
 //        floorShader.setVec3("spotlight.ambient", glm::vec3(0.5));
-        floorShader.setVec3("spotlight.diffuse", glm::vec3(1.0));
+        floorShader.setVec3("spotlight.diffuse", glm::vec3(ambient_light));
+//        floorShader.setVec3("spotlight.diffuse", glm::vec3(1.0));
         floorShader.setVec3("spotlight.specular", glm::vec3(1.0));
         floorShader.setFloat("spotlight.constant", 1);
         floorShader.setFloat("spotlight.linear", 0.07);
