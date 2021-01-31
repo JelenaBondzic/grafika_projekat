@@ -20,4 +20,4 @@ Robot se kreće pomoću strelica na tastaturi.
 
 Kamera može da se kreće po polusferi iznad podloge pritiskom na A, S, D i W. Zumiranje je moguće pomoću scroll.
 
-Intenzitet svetlosti ispod robota može da se povećava i smanjuje pritiskom na + odnosno -, a intenzitet svetlosti moze da se menja na 4 i 6.
+Intenzitet svetlosti ispod robota može da se povećava i smanjuje pritiskom na + odnosno -, a intenzitet svetlosti može da se menja na 4 i 6.
