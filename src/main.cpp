@@ -517,7 +517,7 @@ int main()
             model = glm::mat4(1.0);
             model = glm::translate(model,battery_position);
             model = glm::scale(model, glm::vec3(scale_treat));
-            scale_treat -= deltaTime/8;
+            scale_treat -= deltaTime/10;
             if(scale_treat<=0)
                 new_treat();
 
